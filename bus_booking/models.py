@@ -22,6 +22,33 @@ class BusSchedule(models.Model):
     bus = models.ForeignKey(Bus, on_delete=models.CASCADE)
     date = models.DateField(default=timezone.now)
     time = models.TimeField(default=timezone.now)
+    stationed = models.CharField(max_length=30, default="Waiting")
+
+    def validate_schedule(self):
+        """This is validation logic for a bus"""
+        overlapping_schedules = BusSchedule.objects.filter(
+            bus=self.bus,
+            date=self.date,
+            time=self.time
+        ).exclude(id=self.id)
+
+        if overlapping_schedules.exists():
+            raise ValidationError(f"The bus {self.bus.number_plate} is already booked at this time.")
+
+        conflicting_stations = BusSchedule.objects.filter(
+            bus=self.bus,
+            date=self.date,
+            time=self.time,
+            stationed=self.stationed
+        ).exclude(id=self.id)
+
+        if conflicting_stations.exists():
+            raise ValidationError(
+                f"The bus {self.bus.number_plate} is already scheduled at {self.stationed} at this time")
+
+    def save(self, *args, **kwargs):
+        self.validate_schedule()
+        super().save(*args, **kwargs)
 
 
 class Ticket(models.Model):

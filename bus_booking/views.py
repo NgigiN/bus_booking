@@ -37,6 +37,12 @@ class BusScheduleView(generics.ListCreateAPIView):
     queryset = BusSchedule.objects.all()
     serializer_class = BusScheduleSerializer
 
+    def perform_create(self, serializer):
+        try:
+            serializer.save()
+        except ValidationError as e:
+            raise ValidationError(e.message_dict)
+
 
 class BusScheduleDetailView(generics.RetrieveUpdateDestroyAPIView):
     """This view gets, updates or deletes for Bus schedules"""
