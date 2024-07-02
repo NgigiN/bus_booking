@@ -1,17 +1,13 @@
 """Basic models for the bus application"""
+
 from django.db import models, transaction
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 
 
-class Student(models.Model):
-    """Model for student data if required"""
-    adm_no = models.CharField(max_length=7, primary_key=True)
-    balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-
-
 class Bus(models.Model):
     """Model for every bus in school"""
+
     number_plate = models.CharField(max_length=8, primary_key=True)
     seats = models.IntegerField(default=0)
     available = models.BooleanField(default=False)
@@ -19,6 +15,7 @@ class Bus(models.Model):
 
 class BusSchedule(models.Model):
     """Model for the Bus schedule"""
+
     bus = models.ForeignKey(Bus, on_delete=models.CASCADE)
     date = models.DateField(default=timezone.now)
     time = models.TimeField(default=timezone.now)
@@ -27,24 +24,22 @@ class BusSchedule(models.Model):
     def validate_schedule(self):
         """This is validation logic for a bus"""
         overlapping_schedules = BusSchedule.objects.filter(
-            bus=self.bus,
-            date=self.date,
-            time=self.time
+            bus=self.bus, date=self.date, time=self.time
         ).exclude(id=self.id)
 
         if overlapping_schedules.exists():
-            raise ValidationError(f"The bus {self.bus.number_plate} is already booked at this time.")
+            raise ValidationError(
+                f"The bus {self.bus.number_plate} is already booked at this time."
+            )
 
         conflicting_stations = BusSchedule.objects.filter(
-            bus=self.bus,
-            date=self.date,
-            time=self.time,
-            stationed=self.stationed
+            bus=self.bus, date=self.date, time=self.time, stationed=self.stationed
         ).exclude(id=self.id)
 
         if conflicting_stations.exists():
             raise ValidationError(
-                f"The bus {self.bus.number_plate} is already scheduled at {self.stationed} at this time")
+                f"The bus {self.bus.number_plate} is already scheduled at {self.stationed} at this time"
+            )
 
     def save(self, *args, **kwargs):
         self.validate_schedule()
